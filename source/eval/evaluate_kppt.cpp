@@ -39,6 +39,14 @@ using namespace std;
 
 namespace Eval
 {
+#if defined(USE_AVX2_mask)
+	alignas(32) int mask_counter_[8] = {0,1,2,3,4,5,6,7};
+	const __m256i mask_counter = *reinterpret_cast<__m256i *>(mask_counter_);
+	const int j_max = PIECE_NO_KING - (PIECE_NO_KING/8)*8;
+	alignas(32) int32_t mask_tmp1[8] = {j_max};
+	const __m256i mask_tmp2 = _mm256_permutevar8x32_epi32(*reinterpret_cast<__m256i *>(mask_tmp1),_mm256_setzero_si256());
+	const __m256i mask = _mm256_cmpgt_epi32(mask_tmp2,mask_counter);
+#endif
 
 // 評価関数パラメーター
 #if defined (USE_SHARED_MEMORY_IN_EVAL) && defined(_WIN32)
@@ -466,7 +474,67 @@ namespace Eval
 		const auto* pkppb = kpp[sq_bk][ebp.fb];
 		const auto* pkppw = kpp[Inv(sq_wk)][ebp.fw];
 
-#if defined (USE_AVX2)
+#if defined (USE_AVX2_mask)
+
+		_mm_prefetch(&mask_counter,_MM_HINT_T0);
+		
+		__m256i zero = _mm256_setzero_si256();
+		__m256i sum0 = zero;
+		__m256i sum1 = zero;
+		int i = 0;
+
+		for (; i + 8 < PIECE_NO_KING; i += 8) {
+			__m256i indexes0 = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list0[i]));
+			__m256i indexes1 = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list1[i]));
+			__m256i w0 = _mm256_i32gather_epi32(reinterpret_cast<const int*>(pkppb), indexes0, 4);
+			__m256i w1 = _mm256_i32gather_epi32(reinterpret_cast<const int*>(pkppw), indexes1, 4);
+
+			__m256i w0lo = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w0, 0));
+			sum0 = _mm256_add_epi32(sum0, w0lo);
+			__m256i w0hi = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w0, 1));
+			sum0 = _mm256_add_epi32(sum0, w0hi);
+
+			__m256i w1lo = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w1, 0));
+			sum1 = _mm256_add_epi32(sum1, w1lo);
+			__m256i w1hi = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w1, 1));
+			sum1 = _mm256_add_epi32(sum1, w1hi);
+		}
+		{
+			__m256i indexes0 = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list0[i]));
+			__m256i indexes1 = _mm256_load_si256(reinterpret_cast<const __m256i*>(&list1[i]));
+			__m256i w0 = _mm256_mask_i32gather_epi32(zero,reinterpret_cast<const int*>(pkppb), indexes0, mask, 4);
+			__m256i w1 = _mm256_mask_i32gather_epi32(zero,reinterpret_cast<const int*>(pkppw), indexes1, mask, 4);
+
+			__m256i w0lo = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w0, 0));
+			sum0 = _mm256_add_epi32(sum0, w0lo);
+			__m256i w0hi = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w0, 1));
+			sum0 = _mm256_add_epi32(sum0, w0hi);
+
+			__m256i w1lo = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w1, 0));
+			sum1 = _mm256_add_epi32(sum1, w1lo);
+			__m256i w1hi = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w1, 1));
+			sum1 = _mm256_add_epi32(sum1, w1hi);
+		}
+
+		// sum0とsum0の上位128ビットと下位128ビットを独立して8バイトシフトしたものを足し合わせる
+		sum0 = _mm256_add_epi32(sum0, _mm256_srli_si256(sum0, 8));
+		// sum0の上位128ビットと下位128ビットを足しあわせてsum0_128に代入する
+		__m128i sum0_128 = _mm_add_epi32(_mm256_extracti128_si256(sum0, 0), _mm256_extracti128_si256(sum0, 1));
+		// sum0_128の下位64ビットをdiff.p[1]にストアする
+		std::array<int32_t, 2> sum0_array;
+		_mm_storel_epi64(reinterpret_cast<__m128i*>(&sum0_array), sum0_128);
+		sum.p[0] += sum0_array;
+
+		// sum1とsum1の上位128ビットと下位128ビットを独立して8バイトシフトしたものを足し合わせる
+		sum1 = _mm256_add_epi32(sum1, _mm256_srli_si256(sum1, 8));
+		// sum1の上位128ビットと下位128ビットを足しあわせてsum1_128に代入する
+		__m128i sum1_128 = _mm_add_epi32(_mm256_extracti128_si256(sum1, 0), _mm256_extracti128_si256(sum1, 1));
+		// sum1_128の下位64ビットをdiff.p[1]にストアする
+		std::array<int32_t, 2> sum1_array;
+		_mm_storel_epi64(reinterpret_cast<__m128i*>(&sum1_array), sum1_128);
+		sum.p[1] += sum1_array;
+
+#elif defined (USE_AVX2)
 		
 		__m256i zero = _mm256_setzero_si256();
 		__m256i sum0 = zero;
@@ -780,6 +848,7 @@ namespace Eval
 				std::array<int32_t, 2> diffp0_sum;
 				_mm_storel_epi64(reinterpret_cast<__m128i*>(&diffp0_sum), diffp0_128);
 				diff.p[0] += diffp0_sum;
+
 #else
 				for (int i = 0; i < PIECE_NO_KING; ++i)
 				{
