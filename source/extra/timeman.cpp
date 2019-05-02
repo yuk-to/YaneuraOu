@@ -9,7 +9,7 @@
 namespace {
 
   // これぐらい自分が指すと終局すると考えて計画を練る。
-  const int MoveHorizon = 160;
+  const int MoveHorizon = 80;
 
   // 思考時間のrtimeが指定されたときに用いる乱数
   PRNG prng;
@@ -130,7 +130,7 @@ void Timer::init(Search::LimitsType& limits, Color us, int ply)
 		remain_estimate = std::max(remain_estimate, 0);
 
 		// -- optimumTime
-		int t1 = minimumTime + 2 * remain_estimate / MTG;
+		int t1 = minimumTime + remain_estimate / MTG;
 
 		// -- maximumTime
 		float max_ratio = 5.0f;
@@ -159,7 +159,7 @@ void Timer::init(Search::LimitsType& limits, Color us, int ply)
 			// 1分以下 : ratio = 1.0固定
 			max_ratio = std::min(max_ratio, std::max(float(limits.time[us]) / (60 * 1000), 1.0f));
 		}
-		int t2 = minimumTime + (int)(remain_estimate * 2 * max_ratio / MTG);
+		int t2 = minimumTime + (int)(remain_estimate *  max_ratio / MTG);
 
 		// ただしmaximumは残り時間の30%以上は使わないものとする。
 		// optimumが超える分にはいい。それは残り手数が少ないときとかなので構わない。
