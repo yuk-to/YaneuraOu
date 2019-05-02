@@ -9,7 +9,7 @@
 namespace {
 
   // これぐらい自分が指すと終局すると考えて計画を練る。
-  const int MoveHorizon = 80;
+  const int MoveHorizon = 160;
 
   // 思考時間のrtimeが指定されたときに用いる乱数
   PRNG prng;
@@ -65,7 +65,7 @@ void Timer::init(Search::LimitsType& limits, Color us, int ply)
 	// 序盤重視率
 	// 　これはこんなパラメーターとして手で調整するべきではなく、探索パラメーターの一種として
 	//   別の方法で調整すべき。ただ、対人でソフトに早指ししたいときには意味があるような…。
-	int slowMover = (int)Options["SlowMover"];
+	int slowMover = 2 * (int)Options["SlowMover"];
 
 	if (limits.rtime)
 	{
@@ -135,7 +135,6 @@ void Timer::init(Search::LimitsType& limits, Color us, int ply)
 		// -- maximumTime
 		float max_ratio = 5.0f;
 
-#if	defined(YANEURAOU_2018_GOKU_ENGINE)
 
 		// 20手目までにそんなに大きな勝負所が来ることはあまりないので
 		// max_ratioとoptimumTimeを抑制しておく。(根拠は特にない)
@@ -151,7 +150,6 @@ void Timer::init(Search::LimitsType& limits, Color us, int ply)
 			max_ratio = 3.0f;
 			optimumTime = int(optimumTime * 0.7f);
 		}
-#endif
 
 		// 切れ負けルールにおいては、5分を切っていたら、このratioを抑制する。
 		if (limits.inc[us] == 0 && limits.byoyomi[us] == 0)
