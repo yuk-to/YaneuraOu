@@ -65,7 +65,7 @@ void Timer::init(Search::LimitsType& limits, Color us, int ply)
 	// 序盤重視率
 	// 　これはこんなパラメーターとして手で調整するべきではなく、探索パラメーターの一種として
 	//   別の方法で調整すべき。ただ、対人でソフトに早指ししたいときには意味があるような…。
-	int slowMover = 2 * (int)Options["SlowMover"];
+	int slowMover = (int)Options["SlowMover"];
 
 	if (limits.rtime)
 	{
@@ -130,7 +130,7 @@ void Timer::init(Search::LimitsType& limits, Color us, int ply)
 		remain_estimate = std::max(remain_estimate, 0);
 
 		// -- optimumTime
-		int t1 = minimumTime + remain_estimate / MTG;
+		int t1 = minimumTime + 2 * remain_estimate / MTG;
 
 		// -- maximumTime
 		float max_ratio = 5.0f;
@@ -159,7 +159,7 @@ void Timer::init(Search::LimitsType& limits, Color us, int ply)
 			// 1分以下 : ratio = 1.0固定
 			max_ratio = std::min(max_ratio, std::max(float(limits.time[us]) / (60 * 1000), 1.0f));
 		}
-		int t2 = minimumTime + (int)(remain_estimate * max_ratio / MTG);
+		int t2 = minimumTime + (int)(remain_estimate * 2 * max_ratio / MTG);
 
 		// ただしmaximumは残り時間の30%以上は使わないものとする。
 		// optimumが超える分にはいい。それは残り手数が少ないときとかなので構わない。
