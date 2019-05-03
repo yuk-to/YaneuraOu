@@ -90,6 +90,41 @@ void partial_insertion_sort(ExtMove* begin, ExtMove* end, int limit) {
 		}
 }
 
+// std::sortで実装したバージョン
+void partial_insertion_sort_(ExtMove* const begin, ExtMove* const end, int const limit) {
+    auto mid = std::partition(begin, end, [limit](const ExtMove &mov){ return mov.value >= limit; });
+    std::sort(begin, mid, [](const ExtMove &lhs, const ExtMove &rhs){ return lhs.value > rhs.value; });
+}
+
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+// int64_tに読み替えて速度を稼いだバージョン
+// これが最速だが、AVX2でガリガリ書いたほうが良いはず
+void partial_insertion_sort_(std::int64_t* const begin, std::int64_t* const end, int const limit_) {
+	std::int64_t limit = static_cast<long>(limit_) << 32;
+    auto mid = std::partition(begin, end, [limit](const std::int64_t &mov){ return mov >= limit; });
+
+	// sortされた値の順番を保持したいなら下位bitを読み飛ばして、stable_sortすれば良いが、ここではoff
+    // std::stable_sort(begin, mid, [](const std::int64_t &lhs, const std::int64_t &rhs){ return lhs>>32 > rhs>>32; });
+    std::sort(begin, mid, [](const std::int64_t &lhs, const std::int64_t &rhs){ return lhs > rhs; });
+}
+
+// int64_tに読み替えて速度を稼いだバージョン
+void partial_insertion_sort(std::int64_t* const begin, std::int64_t* const end, const int limit_) {
+	std::int64_t limit = static_cast<std::int64_t>(limit_) << 32;
+
+	for (std::int64_t *sortedEnd = begin, *p = begin + 1; p < end; ++p)
+		if (*p >= limit)
+		{
+			std::int64_t tmp = *p, *q;
+			*p = *++sortedEnd;
+			for (q = sortedEnd; q != begin && ((*(q - 1))>>32) < (tmp>>32); --q) // >>32すれば完全一致
+				*q = *(q - 1);
+			*q = tmp;
+		}
+}
+#endif
+
 // 合法手か判定する
 bool pseudo_legal(const Position& pos, Move ttm)
 {
@@ -353,7 +388,7 @@ top:
 
 		// 指し手を部分的にソートする。depthに線形に依存する閾値で。
 		// TODO : このへん係数調整したほうが良いのでは…。
-		partial_insertion_sort(cur, endMoves, -4000 * depth / ONE_PLY);
+		partial_insertion_sort_(reinterpret_cast<std::int64_t*>(cur), reinterpret_cast<std::int64_t*>(endMoves), -4000 * depth / ONE_PLY);
 
 		++stage;
 		/* fallthrough */
