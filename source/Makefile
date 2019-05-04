@@ -108,6 +108,7 @@ endif
 #SOURCES  = $(wildcard *.cpp)
 SOURCES  = shogi.cpp                                                           \
 	bitboard.cpp                                                               \
+	SuperSortD.cpp                                                               \
 	misc.cpp                                                                   \
 	movegen.cpp                                                                \
 	position.cpp                                                               \
