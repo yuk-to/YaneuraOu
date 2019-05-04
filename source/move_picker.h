@@ -2,6 +2,7 @@
 #define _MOVE_PICKER_H_
 
 #include "shogi.h"
+#include "SuperSortD.hpp"
 
 // -----------------------
 //		history

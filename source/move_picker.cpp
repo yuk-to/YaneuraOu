@@ -106,7 +106,30 @@ void partial_insertion_sort_(std::int64_t* const begin, std::int64_t* const end,
 
 	// sortされた値の順番を保持したいなら下位bitを読み飛ばして、stable_sortすれば良いが、ここではoff
 	// std::stable_sort(begin, mid, [](const std::int64_t &lhs, const std::int64_t &rhs){ return lhs>>32 > rhs>>32; });
-	std::sort(begin, mid, [](const std::int64_t &lhs, const std::int64_t &rhs){ return lhs > rhs; });
+
+	const std::size_t num = mid - begin;
+	if(num < 64)
+	{
+		// doubleのsortにするために2**64/2だけ下駄を履かせる
+		// これぐらい勝手にSIMDになるやろ
+		constexpr std::int64_t half_64bit = 0x8fffffffffffffff;
+		for(std::size_t i = 0; i < num; i++)
+		{
+			begin[i] = begin[i] + half_64bit;
+		}
+		SuperSortD(reinterpret_cast<double*>(begin), num);
+		// 下駄を剥がす
+		for(std::size_t i = 0; i < num; i++)
+		{
+			begin[i] = begin[i] - half_64bit;
+		}
+		// 普通の方向にソートしたので逆順にする
+		std::reverse(begin, mid);
+	}
+	else
+	{
+		std::sort(begin, mid, [](const std::int64_t &lhs, const std::int64_t &rhs){ return lhs > rhs; });
+	}
 }
 
 // int64_tに読み替えて速度を稼いだバージョン
