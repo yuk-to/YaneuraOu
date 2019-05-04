@@ -59,7 +59,7 @@ LTOFLAGS = -flto
 CFLAGS  += -DUNICODE
 
 # stripの指示。(実行ファイルのサイズを小さく)
-LDFLAGS += -Wl,-s
+#LDFLAGS += -Wl,-s
 
 # mingw64では-D_WIN64,-D_WIN32は環境に応じて自動で設定されるので指定すべきではない。
 # CFLAGS += -D_WIN64

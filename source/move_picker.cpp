@@ -107,24 +107,24 @@ void partial_insertion_sort_(std::int64_t* const begin, std::int64_t* const end,
 	// sortされた値の順番を保持したいなら下位bitを読み飛ばして、stable_sortすれば良いが、ここではoff
 	// std::stable_sort(begin, mid, [](const std::int64_t &lhs, const std::int64_t &rhs){ return lhs>>32 > rhs>>32; });
 
+	const std::size_t num_ = end - begin;
 	const std::size_t num = mid - begin;
-	if(num < 64)
+	if(num_ < 64)
 	{
 		// doubleのsortにするために2**64/2だけ下駄を履かせる
 		// これぐらい勝手にSIMDになるやろ
 		constexpr std::int64_t half_64bit = 0x8fffffffffffffff;
-		for(std::size_t i = 0; i < num; i++)
+		for(std::size_t i = 0; i < num_; i++)
 		{
 			begin[i] = begin[i] + half_64bit;
 		}
 		SuperSortD(reinterpret_cast<double*>(begin), num);
+		// std::sort(reinterpret_cast<double*>(begin), reinterpret_cast<double*>(mid), [](const double &lhs, const double &rhs){ return lhs >= rhs; });
 		// 下駄を剥がす
-		for(std::size_t i = 0; i < num; i++)
+		for(std::size_t i = 0; i < num_; i++)
 		{
 			begin[i] = begin[i] - half_64bit;
 		}
-		// 普通の方向にソートしたので逆順にする
-		std::reverse(begin, mid);
 	}
 	else
 	{
@@ -411,7 +411,25 @@ top:
 
 		// 指し手を部分的にソートする。depthに線形に依存する閾値で。
 		// TODO : このへん係数調整したほうが良いのでは…。
+		if(endMoves - cur < 64)
+		{
+				std::cout << endMoves - cur << std::endl;
+				for(auto i = cur; i < endMoves; i++)
+				{
+					std::cout << *i;
+				}
+				std::cout << std::endl;
+		}
+		//partial_insertion_sort_(cur, endMoves, -4000 * depth / ONE_PLY);
 		partial_insertion_sort_(reinterpret_cast<std::int64_t*>(cur), reinterpret_cast<std::int64_t*>(endMoves), -4000 * depth / ONE_PLY);
+		if(endMoves - cur < 64)
+		{
+			for(auto i = cur; i < endMoves; i++)
+			{
+				std::cout << *i;
+			}
+			std::cout << std::endl;
+		}
 
 		++stage;
 		/* fallthrough */
