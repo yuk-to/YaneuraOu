@@ -92,8 +92,8 @@ void partial_insertion_sort(ExtMove* begin, ExtMove* end, int limit) {
 
 // std::sortで実装したバージョン
 void partial_insertion_sort_(ExtMove* const begin, ExtMove* const end, int const limit) {
-    auto mid = std::partition(begin, end, [limit](const ExtMove &mov){ return mov.value >= limit; });
-    std::sort(begin, mid, [](const ExtMove &lhs, const ExtMove &rhs){ return lhs.value > rhs.value; });
+	auto mid = std::partition(begin, end, [limit](const ExtMove &mov){ return mov.value >= limit; });
+	std::sort(begin, mid, [](const ExtMove &lhs, const ExtMove &rhs){ return lhs.value > rhs.value; });
 }
 
 
@@ -102,11 +102,11 @@ void partial_insertion_sort_(ExtMove* const begin, ExtMove* const end, int const
 // これが最速だが、AVX2でガリガリ書いたほうが良いはず
 void partial_insertion_sort_(std::int64_t* const begin, std::int64_t* const end, int const limit_) {
 	std::int64_t limit = static_cast<long>(limit_) << 32;
-    auto mid = std::partition(begin, end, [limit](const std::int64_t &mov){ return mov >= limit; });
+	auto mid = std::partition(begin, end, [limit](const std::int64_t &mov){ return mov >= limit; });
 
 	// sortされた値の順番を保持したいなら下位bitを読み飛ばして、stable_sortすれば良いが、ここではoff
-    // std::stable_sort(begin, mid, [](const std::int64_t &lhs, const std::int64_t &rhs){ return lhs>>32 > rhs>>32; });
-    std::sort(begin, mid, [](const std::int64_t &lhs, const std::int64_t &rhs){ return lhs > rhs; });
+	// std::stable_sort(begin, mid, [](const std::int64_t &lhs, const std::int64_t &rhs){ return lhs>>32 > rhs>>32; });
+	std::sort(begin, mid, [](const std::int64_t &lhs, const std::int64_t &rhs){ return lhs > rhs; });
 }
 
 // int64_tに読み替えて速度を稼いだバージョン
