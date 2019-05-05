@@ -119,7 +119,7 @@ void partial_insertion_sort_(std::int64_t* const begin, std::int64_t* const end,
 			begin[i] = begin[i] + half_64bit;
 		}
 		SuperSortD(reinterpret_cast<double*>(begin), num);
-		// std::sort(reinterpret_cast<double*>(begin), reinterpret_cast<double*>(mid), [](const double &lhs, const double &rhs){ return lhs >= rhs; });
+		// std::sort(reinterpret_cast<double*>(begin), reinterpret_cast<double*>(mid), [](const double &lhs, const double &rhs){ return lhs < rhs; });
 		// 下駄を剥がす
 		for(std::size_t i = 0; i < num_; i++)
 		{
@@ -411,7 +411,7 @@ top:
 
 		// 指し手を部分的にソートする。depthに線形に依存する閾値で。
 		// TODO : このへん係数調整したほうが良いのでは…。
-		if(endMoves - cur < 64)
+		if(endMoves - cur < 64 | true)
 		{
 				std::cout << endMoves - cur << std::endl;
 				for(auto i = cur; i < endMoves; i++)
@@ -422,7 +422,7 @@ top:
 		}
 		//partial_insertion_sort_(cur, endMoves, -4000 * depth / ONE_PLY);
 		partial_insertion_sort_(reinterpret_cast<std::int64_t*>(cur), reinterpret_cast<std::int64_t*>(endMoves), -4000 * depth / ONE_PLY);
-		if(endMoves - cur < 64)
+		if(endMoves - cur < 64 | true)
 		{
 			for(auto i = cur; i < endMoves; i++)
 			{
