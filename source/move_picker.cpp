@@ -109,11 +109,11 @@ void partial_insertion_sort_(std::int64_t* const begin, std::int64_t* const end,
 
 	const std::size_t num_ = end - begin;
 	const std::size_t num = mid - begin;
-	if(num_ < 64)
 	{
 		// doubleのsortにするために2**64/2だけ下駄を履かせる
 		// これぐらい勝手にSIMDになるやろ
-		constexpr std::int64_t half_64bit = 0x8fffffffffffffff;
+		constexpr std::uint64_t ONE = 1;
+		constexpr std::int64_t half_64bit = ONE << 63;
 		for(std::size_t i = 0; i < num_; i++)
 		{
 			begin[i] = begin[i] + half_64bit;
@@ -125,10 +125,6 @@ void partial_insertion_sort_(std::int64_t* const begin, std::int64_t* const end,
 		{
 			begin[i] = begin[i] - half_64bit;
 		}
-	}
-	else
-	{
-		std::sort(begin, mid, [](const std::int64_t &lhs, const std::int64_t &rhs){ return lhs > rhs; });
 	}
 }
 
@@ -411,25 +407,8 @@ top:
 
 		// 指し手を部分的にソートする。depthに線形に依存する閾値で。
 		// TODO : このへん係数調整したほうが良いのでは…。
-		if(endMoves - cur < 64 | true)
-		{
-				std::cout << endMoves - cur << std::endl;
-				for(auto i = cur; i < endMoves; i++)
-				{
-					std::cout << *i;
-				}
-				std::cout << std::endl;
-		}
 		//partial_insertion_sort_(cur, endMoves, -4000 * depth / ONE_PLY);
 		partial_insertion_sort_(reinterpret_cast<std::int64_t*>(cur), reinterpret_cast<std::int64_t*>(endMoves), -4000 * depth / ONE_PLY);
-		if(endMoves - cur < 64 | true)
-		{
-			for(auto i = cur; i < endMoves; i++)
-			{
-				std::cout << *i;
-			}
-			std::cout << std::endl;
-		}
 
 		++stage;
 		/* fallthrough */
