@@ -24,7 +24,7 @@ namespace {
 
 void SuperSortD(double* arr, size_t num)
 {
-	bool isAligned = (((size_t)arr) & 16) == 0;
+	bool isAligned = (((size_t)arr) & 31) == 0;
 	size_t alignedsize;
 	if (num < 32)
 	{
