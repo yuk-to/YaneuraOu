@@ -112,8 +112,8 @@ void partial_insertion_sort_(std::int64_t* const begin, std::int64_t* const end,
 	{
 		// doubleのsortにするために2**64/2だけ下駄を履かせる
 		// これぐらい勝手にSIMDになるやろ
-		constexpr std::uint64_t ONE = 1;
-		constexpr std::int64_t half_64bit = ONE << 63;
+		constexpr std::uint64_t ONE = 3;
+		constexpr std::int64_t half_64bit = ONE << 62;
 		for(std::size_t i = 0; i < num_; i++)
 		{
 			begin[i] = begin[i] + half_64bit;
